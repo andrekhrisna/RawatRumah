@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengingat Pemeliharaan Rumah & Barang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0284c7', 600: '#0369a1', 700: '#0369a1' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col font-sans bg-slate-50 antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Header App -->
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-sky-500/30">
+                        <i class="fa-solid fa-wrench"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-tight text-white">RawatRumah</h1>
+                        <p class="text-xs text-slate-400">Pengingat Pemeliharaan Barang & Rumah</p>
+                    </div>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button onclick="openTemplateModal()" class="px-3 py-2 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition flex items-center gap-2 border border-slate-700">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                        <span class="hidden sm:inline">Template Kilat</span>
+                    </button>
+                    <button onclick="openEmailConfigModal()" class="px-3 py-2 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition flex items-center gap-2 border border-slate-700 relative">
+                        <i class="fa-solid fa-envelope text-sky-400"></i>
+                        <span class="hidden sm:inline">Notifikasi Email</span>
+                        <span id="emailNotificationBadge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                    </button>
+                    <button onclick="openTaskModal()" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition flex items-center gap-2 shadow-md shadow-sky-600/30">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Tambah Tugas</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Banner Status Email Alert Ringkasan -->
+        <div id="emailAlertBanner" class="hidden bg-gradient-to-r from-amber-500 to-red-500 rounded-2xl p-4 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm sm:text-base">Ada Tugas Terlampaui yang Membutuhkan Perhatian!</h3>
+                    <p class="text-xs sm:text-sm opacity-90" id="emailBannerText">Tugas terlampaui dikirim via pengingat harian sampai Anda mengklik selesai.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 self-end md:self-auto">
+                <button onclick="triggerEmailDigest('daily')" class="px-3 py-1.5 bg-white text-red-600 font-semibold rounded-lg text-xs hover:bg-slate-100 transition shadow">
+                    <i class="fa-solid fa-paper-plane mr-1"></i> Kirim Digest Harian Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Overdue -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Terlampaui</p>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-red-600 mt-1" id="statOverdue">0</h3>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-red-50 text-red-600">
+                        <i class="fa-solid fa-circle-exclamation text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] text-red-500 mt-2 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-clock"></i> Pengingat Email Harian
+                </p>
+            </div>
+
+            <!-- Upcoming Week -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Jadwal Minggu Ini</p>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1" id="statUpcoming">0</h3>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-amber-50 text-amber-600">
+                        <i class="fa-solid fa-calendar-week text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] text-amber-600 mt-2 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-envelope-open-text"></i> Pengingat Mingguan
+                </p>
+            </div>
+
+            <!-- On Schedule / Safe -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Aman / Terjadwal</p>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1" id="statSafe">0</h3>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
+                        <i class="fa-solid fa-shield-halved text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] text-emerald-600 mt-2 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-check"></i> Masih Waktu Sisa
+                </p>
+            </div>
+
+            <!-- Total Tasks -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Item</p>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-1" id="statTotal">0</h3>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-sky-50 text-sky-600">
+                        <i class="fa-solid fa-boxes-stacked text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-list-check"></i> Barang & Bangunan
+                </p>
+            </div>
+        </section>
+
+        <!-- Search & Filter Controls -->
+        <section class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+            <div class="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+                <!-- Search Input -->
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" placeholder="Cari pekerjaan, barang, atau catatan..." oninput="renderTasks()" class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition">
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Status Filter -->
+                    <select id="statusFilter" onchange="renderTasks()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <option value="ALL">Semua Status</option>
+                        <option value="OVERDUE">🔴 Terlampaui (Overdue)</option>
+                        <option value="UPCOMING">🟡 Mendatang (≤7 Hari)</option>
+                        <option value="SAFE">🟢 Tepat Waktu / Aman</option>
+                    </select>
+
+                    <!-- Category Filter -->
+                    <select id="categoryFilter" onchange="renderTasks()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <option value="ALL">Semua Kategori</option>
+                        <!-- Dynamic Categories -->
+                    </select>
+
+                    <!-- Sort Filter -->
+                    <select id="sortFilter" onchange="renderTasks()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <option value="DUE_ASC">Jatuh Tempo (Terdekat)</option>
+                        <option value="DUE_DESC">Jatuh Tempo (Terjauh)</option>
+                        <option value="NAME_ASC">Nama (A-Z)</option>
+                        <option value="FREQ_ASC">Frekuensi</option>
+                    </select>
+
+                    <!-- Export/Import Actions -->
+                    <button onclick="exportData()" title="Ekspor Data JSON" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition border border-slate-200">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <label title="Impor Data JSON" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition border border-slate-200 cursor-pointer">
+                        <i class="fa-solid fa-upload"></i>
+                        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Area: Task List -->
+        <section id="taskListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Dynamic Task Cards Rendered Here -->
+        </section>
+
+        <!-- Empty State Container -->
+        <div id="emptyState" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+            <div class="w-16 h-16 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">Belum Ada Tugas Pemeliharaan</h3>
+            <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">Mulai dengan menambahkan item barang/bagian rumah yang perlu dibersihkan, diganti, atau diperiksa secara berkala.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="openTemplateModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition">
+                    Gunakan Template Kilat
+                </button>
+                <button onclick="openTaskModal()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold rounded-xl transition shadow">
+                    <i class="fa-solid fa-plus mr-1"></i> Buat Tugas Baru
+                </button>
+            </div>
+        </div>
+    </main>
+
+
+    <!-- ==================== MODAL: ADD / EDIT TASK ==================== -->
+    <div id="taskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-pen-to-square" id="modalTitleIcon"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base" id="modalTaskTitle">Tambah Pekerjaan Pemeliharaan</h3>
+                        <p class="text-xs text-slate-500">Atur jadwal pembersihan, penggantian, atau servis</p>
+                    </div>
+                </div>
+                <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/50 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="taskForm" onsubmit="saveTask(event)" class="p-5 overflow-y-auto custom-scrollbar space-y-4 flex-1">
+                <input type="hidden" id="taskId">
+
+                <!-- Jenis Pekerjaan -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nama / Jenis Pekerjaan <span class="text-red-500">*</span></label>
+                    <input type="text" id="taskName" required placeholder="Contoh: Bersihkan Filter AC Kamar Utama" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+
+                <!-- Kategori & Prioritas -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Kategori <span class="text-red-500">*</span></label>
+                        <input type="text" id="taskCategory" required list="categorySuggestions" placeholder="Pilih atau Ketik..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <datalist id="categorySuggestions">
+                            <option value="Pendingin & AC"></option>
+                            <option value="Kebersihan & Sanitasi"></option>
+                            <option value="Kendaraan"></option>
+                            <option value="Peralatan Dapur"></option>
+                            <option value="Air & Plumbing"></option>
+                            <option value="Struktur & Atap"></option>
+                            <option value="Elektronik & Listrik"></option>
+                            <option value="Kebun & Luar Rumah"></option>
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Prioritas</label>
+                        <select id="taskPriority" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <option value="Tinggi">🔴 Tinggi (Penting)</option>
+                            <option value="Sedang" selected>🟡 Sedang (Rutin)</option>
+                            <option value="Rendah">🟢 Rendah (Opsional)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Frekuensi -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Frekuensi Pemeliharaan <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="freqValue" min="1" required placeholder="Jumlah" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <select id="freqUnit" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <option value="DAYS">Hari</option>
+                            <option value="WEEKS">Minggu</option>
+                            <option value="MONTHS" selected>Bulan</option>
+                            <option value="YEARS">Tahun</option>
+                        </select>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Sistem akan menghitung tanggal berikutnya secara otomatis berdasarkan tanggal terakhir dikerjakan.</p>
+                </div>
+
+                <!-- Tanggal Terakhir Dikerjakan -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Tanggal Terakhir Dikerjakan <span class="text-red-500">*</span></label>
+                    <input type="date" id="lastDoneDate" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+
+                <!-- Catatan / Petunjuk -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Catatan / Langkah-Langkah / Merk Sparepart</label>
+                    <textarea id="taskNotes" rows="3" placeholder="Contoh: Pakai filter merk X, bersihkan dengan semprotan air tekanan sedang..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-xs sm:text-sm font-semibold bg-sky-600 hover:bg-sky-500 text-white rounded-xl shadow-md shadow-sky-600/30 transition">
+                        Simpan Tugas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: TEMPLATE KILAT ==================== -->
+    <div id="templateModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Template Pemeliharaan Populer</h3>
+                        <p class="text-xs text-slate-500">Pilih template standar rumah tangga untuk langsung ditambahkan</p>
+                    </div>
+                </div>
+                <button onclick="closeTemplateModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/50 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-3" id="templateList">
+                <!-- Preset Templates Inserted Dynamic -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: NOTIFIKASI EMAIL CONFIG & DIGEST PREVIEW ==================== -->
+    <div id="emailConfigModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-900 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-envelope-circle-check text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base">Pengaturan & Simulator Email Reminder</h3>
+                        <p class="text-xs text-slate-400">Pengiriman Harian (Terlampaui) & Mingguan (Jadwal Dekat)</p>
+                    </div>
+                </div>
+                <button onclick="closeEmailConfigModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto custom-scrollbar space-y-6">
+                <!-- Config Inputs -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <h4 class="font-bold text-xs uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders text-sky-600"></i> Konfigurasi Email Penerima
+                    </h4>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Email Anda (Penerima Remind):</label>
+                        <input type="email" id="userEmailInput" placeholder="pemilik.rumah@email.com" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div class="bg-white p-3 rounded-lg border border-slate-200 text-xs">
+                            <span class="font-bold text-red-600 block mb-0.5"><i class="fa-solid fa-calendar-day mr-1"></i> Mode Harian (Daily)</span>
+                            Mengecek dan mengirim daftar tugas <span class="font-semibold text-red-600">TERLAMPAUI</span> setiap hari jam 08:00 sampai Anda klik Selesai.
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-slate-200 text-xs">
+                            <span class="font-bold text-amber-600 block mb-0.5"><i class="fa-solid fa-calendar-week mr-1"></i> Mode Mingguan (Weekly)</span>
+                            Mengecek ringkasan tugas <span class="font-semibold text-amber-600">MENDATANG (≤7 Hari)</span> setiap Senin pagi.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trigger Actions -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-xs uppercase text-slate-500 tracking-wider">Uji Coba Pengiriman & Pratinjau Email</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="previewEmail('daily')" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-fire"></i> Generate Digest Harian (Terlampaui)
+                        </button>
+                        <button onclick="previewEmail('weekly')" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-envelope-open-text"></i> Generate Digest Mingguan
+                        </button>
+                        <button onclick="sendViaMailto()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Aplikasi Email Saya
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Display Box -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-slate-600 uppercase">Pratinjau Subjek & Isi Email:</span>
+                        <span id="previewTypeBadge" class="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-slate-100 text-slate-600">Draft</span>
+                    </div>
+                    <div class="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-inner">
+                        <div class="bg-slate-100 p-2.5 border-b border-slate-200 text-xs text-slate-600 space-y-1">
+                            <p><strong>Kepada:</strong> <span id="previewTo">pemilik.rumah@email.com</span></p>
+                            <p><strong>Subjek:</strong> <span id="previewSubject" class="font-semibold text-slate-800">-</span></p>
+                        </div>
+                        <div id="previewBody" class="p-4 text-xs font-mono text-slate-700 bg-slate-50/50 max-h-60 overflow-y-auto whitespace-pre-wrap border-t border-slate-100">
+                            Pilih tombol generate di atas untuk melihat draft email pengingat.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+                <span class="text-[11px] text-slate-400">Pengingat siap di-copy atau dikirimkan</span>
+                <button onclick="saveEmailConfig()" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-xs shadow transition">
+                    Simpan Pengaturan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: LOG RIWAYAT PENGERJAAN ==================== -->
+    <div id="historyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base" id="historyTaskTitle">Riwayat Pengerjaan</h3>
+                        <p class="text-xs text-slate-500">Catatan historis penyelesaian tugas</p>
+                    </div>
+                </div>
+                <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/50 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto custom-scrollbar space-y-3 flex-1" id="historyLogsList">
+                <!-- Log entries inserted dynamically -->
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50 text-right">
+                <button onclick="closeHistoryModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Widget -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none bg-slate-900 text-white text-xs sm:text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-800">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage">Pesan Notifikasi</span>
+    </div>
+
+    <script>
+        // ==================== INITIAL DATA & STATE ====================
+        const STORAGE_KEY = 'RAWAT_RUMAH_TASKS_DATA_V1';
+        const CONFIG_KEY = 'RAWAT_RUMAH_CONFIG_V1';
+
+        // Default Presets for Template
+        const PRESET_TEMPLATES = [
+            {
+                name: 'Servis & Cuci AC Rutin',
+                category: 'Pendingin & AC',
+                priority: 'Tinggi',
+                freqValue: 3,
+                freqUnit: 'MONTHS',
+                notes: 'Cuci filter, cuci indoor/outdoor, dan cek tekanan freon.'
+            },
+            {
+                name: 'Kuras Toren / Tangki Air Utama',
+                category: 'Air & Plumbing',
+                priority: 'Tinggi',
+                freqValue: 6,
+                freqUnit: 'MONTHS',
+                notes: 'Bersihkan endapan lumpur di dasar toren air dan bilas kran.'
+            },
+            {
+                name: 'Ganti Filter Air Minum / Reverse Osmosis',
+                category: 'Air & Plumbing',
+                priority: 'Tinggi',
+                freqValue: 6,
+                freqUnit: 'MONTHS',
+                notes: 'Ganti spun sedimen 0.1 micron & Filter Carbon.'
+            },
+            {
+                name: 'Ganti Oli Engine Motor/Mobil',
+                category: 'Kendaraan',
+                priority: 'Tinggi',
+                freqValue: 3,
+                freqUnit: 'MONTHS',
+                notes: 'Ganti oli mesin dan cek tekanan angin ban sparepart.'
+            },
+            {
+                name: 'Bersihkan Filter Mesin Cuci',
+                category: 'Kebersihan & Sanitasi',
+                priority: 'Sedang',
+                freqValue: 1,
+                freqUnit: 'MONTHS',
+                notes: 'Lepas kantong kotoran di drum mesin cuci dan bilas air panas.'
+            },
+            {
+                name: 'Cek Atap, Genteng & Talang Kebocoran',
+                category: 'Struktur & Atap',
+                priority: 'Tinggi',
+                freqValue: 6,
+                freqUnit: 'MONTHS',
+                notes: 'Periksa dedaunan penyumbat talang air sebelum musim hujan.'
+            },
+            {
+                name: 'Deep Clean Kamar Mandi & Kerak Keramik',
+                category: 'Kebersihan & Sanitasi',
+                priority: 'Sedang',
+                freqValue: 2,
+                freqUnit: 'WEEKS',
+                notes: 'Pembersihan asam ringan untuk sela-sela nat keramik.'
+            },
+            {
+                name: 'Cek Baterai Detector Asap & Detektor Gas',
+                category: 'Elektronik & Listrik',
+                priority: 'Sedang',
+                freqValue: 1,
+                freqUnit: 'YEARS',
+                notes: 'Uji alarm dan ganti baterai 9V cadangan.'
+            }
+        ];
+
+        let tasks = [];
+        let config = {
+            userEmail: 'pemilik.rumah@gmail.com',
+            lastDailyDigest: null,
+            lastWeeklyDigest: null
+        };
+
+        window.onload = function() {
+            loadConfig();
+            loadTasks();
+            renderCategoriesFilter();
+            renderTasks();
+            populateTemplates();
+            checkAutoEmailAlerts();
+        };
+
+        // Local Storage Handlers
+        function loadTasks() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    tasks = JSON.parse(stored);
+                } catch (e) {
+                    tasks = getSampleTasks();
+                }
+            } else {
+                tasks = getSampleTasks();
+                saveTasksToStorage();
+            }
+        }
+
+        function saveTasksToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        }
+
+        function loadConfig() {
+            const storedConfig = localStorage.getItem(CONFIG_KEY);
+            if (storedConfig) {
+                try { config = { ...config, ...JSON.parse(storedConfig) }; } catch (e) {}
+            }
+            document.getElementById('userEmailInput').value = config.userEmail || '';
+        }
+
+        function saveEmailConfig() {
+            config.userEmail = document.getElementById('userEmailInput').value || 'user@example.com';
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            closeEmailConfigModal();
+            showToast('Pengaturan email berhasil disimpan!');
+        }
+
+        function getSampleTasks() {
+            const today = new Date();
+            
+            // Sample 1: Overdue task (last done 4 months ago, freq = 3 months)
+            const d1 = new Date(today);
+            d1.setMonth(d1.getMonth() - 4);
+            
+            // Sample 2: Upcoming task in 3 days
+            const d2 = new Date(today);
+            d2.setDate(d2.getDate() - 27); // done 27 days ago, freq 30 days => due in 3 days
+
+            // Sample 3: Safe task (done 5 days ago, freq 60 days)
+            const d3 = new Date(today);
+            d3.setDate(d3.getDate() - 5);
+
+            return [
+                {
+                    id: 'task_' + Date.now() + '_1',
+                    name: 'Servis & Cuci AC Kamar Utama',
+                    category: 'Pendingin & AC',
+                    priority: 'Tinggi',
+                    freqValue: 3,
+                    freqUnit: 'MONTHS',
+                    lastDoneDate: formatDateToYYYYMMDD(d1),
+                    notes: 'Jasa servis Pak Budi (08123456789). Cuci outdoor dan indoor.',
+                    history: [
+                        { doneDate: formatDateToYYYYMMDD(d1), note: 'Selesai rutin tepat waktu.' }
+                    ]
+                },
+                {
+                    name: 'Ganti Filter Air Sedimen Pertama',
+                    category: 'Air & Plumbing',
+                    priority: 'Tinggi',
+                    freqValue: 1,
+                    freqUnit: 'MONTHS',
+                    lastDoneDate: formatDateToYYYYMMDD(d2),
+                    notes: 'Gunakan spun ukuran 0.1 micron merk Eugen.',
+                    id: 'task_' + Date.now() + '_2',
+                    history: []
+                },
+                {
+                    name: 'Cek Kebocoran Atap & Talang Air',
+                    category: 'Struktur & Atap',
+                    priority: 'Sedang',
+                    freqValue: 6,
+                    freqUnit: 'MONTHS',
+                    lastDoneDate: formatDateToYYYYMMDD(d3),
+                    notes: 'Pastikan tidak ada daun kering menumpuk di saluran seng.',
+                    id: 'task_' + Date.now() + '_3',
+                    history: []
+                }
+            ];
+        }
+
+        // Date Helpers & Calculation Engine
+        function formatDateToYYYYMMDD(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function calculateNextDueDate(lastDoneDateStr, freqVal, freqUnit) {
+            if (!lastDoneDateStr) return new Date();
+            const parts = lastDoneDateStr.split('-');
+            const date = new Date(parts[0], parts[1] - 1, parts[2]);
+
+            const val = parseInt(freqVal) || 1;
+            switch(freqUnit) {
+                case 'DAYS':
+                    date.setDate(date.getDate() + val);
+                    break;
+                case 'WEEKS':
+                    date.setDate(date.getDate() + (val * 7));
+                    break;
+                case 'MONTHS':
+                    date.setMonth(date.getMonth() + val);
+                    break;
+                case 'YEARS':
+                    date.setFullYear(date.getFullYear() + val);
+                    break;
+                default:
+                    date.setDate(date.getDate() + val);
+            }
+            return date;
+        }
+
+        function getTaskStatus(task) {
+            const nextDue = calculateNextDueDate(task.lastDoneDate, task.freqValue, task.freqUnit);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            nextDue.setHours(0, 0, 0, 0);
+
+            const diffTime = nextDue - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                return {
+                    code: 'OVERDUE',
+                    label: `Terlampaui (${Math.abs(diffDays)} Hari)`,
+                    days: diffDays,
+                    badgeClass: 'bg-red-100 text-red-700 border-red-200',
+                    dotColor: 'bg-red-500'
+                };
+            } else if (diffDays <= 7) {
+                return {
+                    code: 'UPCOMING',
+                    label: diffDays === 0 ? 'Hari Ini!' : `Mendatang (${diffDays} Hari)`,
+                    days: diffDays,
+                    badgeClass: 'bg-amber-100 text-amber-700 border-amber-200',
+                    dotColor: 'bg-amber-500'
+                };
+            } else {
+                return {
+                    code: 'SAFE',
+                    label: `Aman (${diffDays} Hari lagi)`,
+                    days: diffDays,
+                    badgeClass: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    dotColor: 'bg-emerald-500'
+                };
+            }
+        }
+
+        function formatFreqText(val, unit) {
+            const unitMap = { 'DAYS': 'Hari', 'WEEKS': 'Minggu', 'MONTHS': 'Bulan', 'YEARS': 'Tahun' };
+            return `Setiap ${val} ${unitMap[unit] || unit}`;
+        }
+
+        // Render Functions
+        function renderTasks() {
+            const container = document.getElementById('taskListContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const sortFilter = document.getElementById('sortFilter').value;
+
+            // Filter
+            let filtered = tasks.filter(t => {
+                const matchesSearch = t.name.toLowerCase().includes(searchQuery) ||
+                                      t.category.toLowerCase().includes(searchQuery) ||
+                                      (t.notes && t.notes.toLowerCase().includes(searchQuery));
+                
+                const statusObj = getTaskStatus(t);
+                const matchesStatus = (statusFilter === 'ALL') || (statusObj.code === statusFilter);
+                const matchesCategory = (categoryFilter === 'ALL') || (t.category === categoryFilter);
+
+                return matchesSearch && matchesStatus && matchesCategory;
+            });
+
+            // Sort
+            filtered.sort((a, b) => {
+                const dueA = calculateNextDueDate(a.lastDoneDate, a.freqValue, a.freqUnit);
+                const dueB = calculateNextDueDate(b.lastDoneDate, b.freqValue, b.freqUnit);
+
+                if (sortFilter === 'DUE_ASC') return dueA - dueB;
+                if (sortFilter === 'DUE_DESC') return dueB - dueA;
+                if (sortFilter === 'NAME_ASC') return a.name.localeCompare(b.name);
+                if (sortFilter === 'FREQ_ASC') return a.freqValue - b.freqValue;
+                return 0;
+            });
+
+            // Update Statistics
+            updateKPIs();
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Generate Cards
+            container.innerHTML = filtered.map(task => {
+                const status = getTaskStatus(task);
+                const nextDueDate = calculateNextDueDate(task.lastDoneDate, task.freqValue, task.freqUnit);
+                const formattedNextDue = nextDueDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                const formattedLastDone = new Date(task.lastDoneDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                const priorityBadge = task.priority === 'Tinggi' ? 'bg-red-50 text-red-600 border-red-200' :
+                                      task.priority === 'Rendah' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                      'bg-amber-50 text-amber-600 border-amber-200';
+
+                return `
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden relative group">
+                    <!-- Top Color Bar -->
+                    <div class="h-1.5 w-full ${status.code === 'OVERDUE' ? 'bg-red-500' : status.code === 'UPCOMING' ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
+                    
+                    <div class="p-5 flex-1 space-y-3">
+                        <!-- Category & Status Badge -->
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 tracking-tight">
+                                <i class="fa-solid fa-tag text-slate-400 mr-1"></i>${escapeHtml(task.category)}
+                            </span>
+                            <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg border ${status.badgeClass} flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full ${status.dotColor}"></span>
+                                ${status.label}
+                            </span>
+                        </div>
+
+                        <!-- Task Name -->
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base group-hover:text-sky-600 transition leading-snug">
+                                ${escapeHtml(task.name)}
+                            </h3>
+                            ${task.notes ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100"><i class="fa-regular fa-note-sticky text-slate-400 mr-1"></i>${escapeHtml(task.notes)}</p>` : ''}
+                        </div>
+
+                        <!-- Schedule Info -->
+                        <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                            <div>
+                                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Frekuensi</span>
+                                <span class="font-medium text-slate-700">${formatFreqText(task.freqValue, task.freqUnit)}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block text-[10px] uppercase font-semibold">Jatuh Tempo</span>
+                                <span class="font-bold ${status.code === 'OVERDUE' ? 'text-red-600' : 'text-slate-800'}">${formattedNextDue}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-[11px] text-slate-400">
+                            <span>Terakhir: ${formattedLastDone}</span>
+                            <span class="px-2 py-0.5 rounded border text-[10px] font-semibold ${priorityBadge}">Prio: ${task.priority || 'Sedang'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Action Bar -->
+                    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1">
+                            <button onclick="openHistoryModal('${task.id}')" title="Lihat Riwayat" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition text-xs">
+                                <i class="fa-solid fa-history"></i>
+                            </button>
+                            <button onclick="editTask('${task.id}')" title="Edit Tugas" class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition text-xs">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteTask('${task.id}')" title="Hapus Tugas" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition text-xs">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+
+                        <!-- Complete Action Button -->
+                        <button onclick="markTaskDone('${task.id}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Selesai</span>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function updateKPIs() {
+            let overdue = 0, upcoming = 0, safe = 0;
+
+            tasks.forEach(t => {
+                const st = getTaskStatus(t);
+                if (st.code === 'OVERDUE') overdue++;
+                else if (st.code === 'UPCOMING') upcoming++;
+                else safe++;
+            });
+
+            document.getElementById('statOverdue').innerText = overdue;
+            document.getElementById('statUpcoming').innerText = upcoming;
+            document.getElementById('statSafe').innerText = safe;
+            document.getElementById('statTotal').innerText = tasks.length;
+
+            // Notification alert banner toggle
+            const alertBanner = document.getElementById('emailAlertBanner');
+            const badge = document.getElementById('emailNotificationBadge');
+            if (overdue > 0) {
+                alertBanner.classList.remove('hidden');
+                badge.classList.remove('hidden');
+                document.getElementById('emailBannerText').innerText = `Ada ${overdue} tugas terlampaui. Pengingat harian aktif dikirim ke ${config.userEmail || 'email Anda'}!`;
+            } else {
+                alertBanner.classList.add('hidden');
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderCategoriesFilter() {
+            const select = document.getElementById('categoryFilter');
+            const currentVal = select.value;
+
+            const categories = Array.from(new Set(tasks.map(t => t.category))).sort();
+            
+            select.innerHTML = `<option value="ALL">Semua Kategori (${categories.length})</option>` +
+                categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+            select.value = currentVal;
+        }
+
+        // Task Operations
+        function openTaskModal(editId = null) {
+            const form = document.getElementById('taskForm');
+            form.reset();
+            document.getElementById('taskId').value = '';
+
+            if (editId) {
+                const task = tasks.find(t => t.id === editId);
+                if (task) {
+                    document.getElementById('taskId').value = task.id;
+                    document.getElementById('taskName').value = task.name;
+                    document.getElementById('taskCategory').value = task.category;
+                    document.getElementById('taskPriority').value = task.priority || 'Sedang';
+                    document.getElementById('freqValue').value = task.freqValue;
+                    document.getElementById('freqUnit').value = task.freqUnit;
+                    document.getElementById('lastDoneDate').value = task.lastDoneDate;
+                    document.getElementById('taskNotes').value = task.notes || '';
+
+                    document.getElementById('modalTaskTitle').innerText = 'Edit Pekerjaan';
+                }
+            } else {
+                document.getElementById('modalTaskTitle').innerText = 'Tambah Pekerjaan Pemeliharaan';
+                document.getElementById('lastDoneDate').value = formatDateToYYYYMMDD(new Date());
+            }
+
+            document.getElementById('taskModal').classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+
+        function saveTask(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('taskId').value;
+            const name = document.getElementById('taskName').value.trim();
+            const category = document.getElementById('taskCategory').value.trim();
+            const priority = document.getElementById('taskPriority').value;
+            const freqValue = parseInt(document.getElementById('freqValue').value);
+            const freqUnit = document.getElementById('freqUnit').value;
+            const lastDoneDate = document.getElementById('lastDoneDate').value;
+            const notes = document.getElementById('taskNotes').value.trim();
+
+            if (id) {
+                // Update
+                const index = tasks.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    tasks[index] = {
+                        ...tasks[index],
+                        name, category, priority, freqValue, freqUnit, lastDoneDate, notes
+                    };
+                    showToast('Tugas pemeliharaan berhasil diperbarui!');
+                }
+            } else {
+                // Create
+                const newTask = {
+                    id: 'task_' + Date.now(),
+                    name, category, priority, freqValue, freqUnit, lastDoneDate, notes,
+                    history: [
+                        { doneDate: lastDoneDate, note: 'Tugas pertama kali dibuat.' }
+                    ]
+                };
+                tasks.push(newTask);
+                showToast('Tugas pemeliharaan baru ditambahkan!');
+            }
+
+            saveTasksToStorage();
+            renderCategoriesFilter();
+            renderTasks();
+            closeTaskModal();
+        }
+
+        function editTask(id) {
+            openTaskModal(id);
+        }
+
+        function deleteTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            // Custom UI prompt alternative without standard confirm window
+            if (window.confirm(`Hapus tugas "${task.name}" dari daftar pemeliharaan?`)) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasksToStorage();
+                renderCategoriesFilter();
+                renderTasks();
+                showToast('Tugas berhasil dihapus.', 'info');
+            }
+        }
+
+        function markTaskDone(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            const todayStr = formatDateToYYYYMMDD(new Date());
+            task.lastDoneDate = todayStr;
+
+            if (!task.history) task.history = [];
+            task.history.unshift({
+                doneDate: todayStr,
+                note: `Selesai dikerjakan pada ${new Date().toLocaleDateString('id-ID', { dateStyle: 'medium' })}`
+            });
+
+            saveTasksToStorage();
+            renderTasks();
+            showToast(`Selesai! "${task.name}" telah diperbarui ke tanggal hari ini.`, 'success');
+        }
+
+        // History Logs Modal
+        function openHistoryModal(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            document.getElementById('historyTaskTitle').innerText = `Riwayat: ${task.name}`;
+            const container = document.getElementById('historyLogsList');
+
+            if (!task.history || task.history.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-xs">
+                        Belum ada catatatan riwayat pengerjaan sebelumnya.
+                    </div>
+                `;
+            } else {
+                container.innerHTML = task.history.map((h, i) => `
+                    <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div class="flex-1 text-xs">
+                            <div class="flex justify-between font-bold text-slate-800">
+                                <span>Pengerjaan ke-${task.history.length - i}</span>
+                                <span class="text-slate-500 font-normal">${h.doneDate}</span>
+                            </div>
+                            <p class="text-slate-600 mt-0.5">${escapeHtml(h.note || 'Selesai tepat waktu')}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        // Template Presets Modal
+        function openTemplateModal() {
+            document.getElementById('templateModal').classList.remove('hidden');
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('templateModal').classList.add('hidden');
+        }
+
+        function populateTemplates() {
+            const container = document.getElementById('templateList');
+            container.innerHTML = PRESET_TEMPLATES.map((tmpl, idx) => `
+                <div class="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-sky-300 hover:shadow-sm transition flex flex-col justify-between space-y-2">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold px-2 py-0.5 bg-sky-50 text-sky-700 rounded border border-sky-100">${tmpl.category}</span>
+                            <span class="text-[10px] font-medium text-slate-500">${formatFreqText(tmpl.freqValue, tmpl.freqUnit)}</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-800 mt-1">${tmpl.name}</h4>
+                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">${tmpl.notes}</p>
+                    </div>
+                    <button onclick="useTemplate(${idx})" class="w-full py-1.5 bg-slate-100 hover:bg-sky-600 hover:text-white text-slate-700 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Tambahkan tugas
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function useTemplate(idx) {
+            const tmpl = PRESET_TEMPLATES[idx];
+            if (!tmpl) return;
+
+            const newTask = {
+                id: 'task_' + Date.now(),
+                name: tmpl.name,
+                category: tmpl.category,
+                priority: tmpl.priority,
+                freqValue: tmpl.freqValue,
+                freqUnit: tmpl.freqUnit,
+                lastDoneDate: formatDateToYYYYMMDD(new Date()),
+                notes: tmpl.notes,
+                history: [
+                    { doneDate: formatDateToYYYYMMDD(new Date()), note: 'Ditambahkan dari template preset.' }
+                ]
+            };
+
+            tasks.push(newTask);
+            saveTasksToStorage();
+            renderCategoriesFilter();
+            renderTasks();
+            closeTemplateModal();
+            showToast(`Template "${tmpl.name}" berhasil ditambahkan!`);
+        }
+
+        // Email Reminder Engine & Preview
+        function openEmailConfigModal() {
+            document.getElementById('emailConfigModal').classList.remove('hidden');
+            previewEmail('daily');
+        }
+
+        function closeEmailConfigModal() {
+            document.getElementById('emailConfigModal').classList.add('hidden');
+        }
+
+        function generateEmailDigestContent(type = 'daily') {
+            const recipient = document.getElementById('userEmailInput').value || config.userEmail || 'pemilik.rumah@email.com';
+            const todayStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            let subject = '';
+            let bodyText = '';
+            let badgeText = '';
+
+            if (type === 'daily') {
+                const overdueList = tasks.filter(t => getTaskStatus(t).code === 'OVERDUE');
+                subject = `[PENGINGAT HARIAN OVERDUE] ${overdueList.length} Pemeliharaan Rumah Belum Selesai - ${todayStr}`;
+                badgeText = 'Harian (Overdue)';
+
+                bodyText = `Halo ${recipient},\n\n` +
+                    `Ini adalah Pengingat Pemeliharaan Harian Otomatis untuk tugas yang telah TERLAMPAUI dan belum diklik selesai:\n\n` +
+                    `--------------------------------------------------\n`;
+
+                if (overdueList.length === 0) {
+                    bodyText += `🎉 SELAMAT! Tidak ada tugas pemeliharaan yang terlampaui saat ini. Semua rumah & barang Anda dalam kondisi prima!\n`;
+                } else {
+                    overdueList.forEach((t, i) => {
+                        const st = getTaskStatus(t);
+                        const due = calculateNextDueDate(t.lastDoneDate, t.freqValue, t.freqUnit).toLocaleDateString('id-ID');
+                        bodyText += `${i + 1}. ${t.name.toUpperCase()}\n` +
+                            `   - Kategori  : ${t.category}\n` +
+                            `   - Status    : Terlampaui ${Math.abs(st.days)} hari (Jatuh tempo: ${due})\n` +
+                            `   - Frekuensi : ${formatFreqText(t.freqValue, t.freqUnit)}\n` +
+                            `   - Catatan   : ${t.notes || '-'}\n\n`;
+                    });
+                    bodyText += `Mohon segera lakukan pemeriksaan atau tandai selesai di aplikasi aplikasi setelah dikerjakan agar pengingat harian ini berhenti.\n`;
+                }
+            } else {
+                const upcomingList = tasks.filter(t => {
+                    const st = getTaskStatus(t);
+                    return st.code === 'UPCOMING' || st.code === 'OVERDUE';
+                });
+
+                subject = `[RINGKASAN MINGGUAN] Jadwal Pemeliharaan Rumah & Barang - MINGGU INI`;
+                badgeText = 'Mingguan (Jadwal Dekat)';
+
+                bodyText = `Halo ${recipient},\n\n` +
+                    `Berikut adalah Ringkasan Jadwal Pemeliharaan Rumah & Barang Anda untuk minggu ini:\n\n` +
+                    `--------------------------------------------------\n`;
+
+                if (upcomingList.length === 0) {
+                    bodyText += `Tidak ada pemeliharaan yang jatuh tempo dalam 7 hari ke depan.\n`;
+                } else {
+                    upcomingList.forEach((t, i) => {
+                        const st = getTaskStatus(t);
+                        const due = calculateNextDueDate(t.lastDoneDate, t.freqValue, t.freqUnit).toLocaleDateString('id-ID');
+                        bodyText += `${i + 1}. [${st.code}] ${t.name}\n` +
+                            `   - Kategori : ${t.category}\n` +
+                            `   - Tanggal  : ${due} (${st.label})\n` +
+                            `   - Catatan  : ${t.notes || '-'}\n\n`;
+                    });
+                }
+            }
+
+            bodyText += `--------------------------------------------------\n` +
+                `Dikirim otomatis oleh Sistem Pengingat RawatRumah.\n` +
+                `Akses dashboard aplikasi Anda untuk mengelola jadwal lengkap.`;
+
+            return { recipient, subject, bodyText, badgeText };
+        }
+
+        function previewEmail(type) {
+            const data = generateEmailDigestContent(type);
+            document.getElementById('previewTo').innerText = data.recipient;
+            document.getElementById('previewSubject').innerText = data.subject;
+            document.getElementById('previewBody').innerText = data.bodyText;
+            document.getElementById('previewTypeBadge').innerText = data.badgeText;
+        }
+
+        function sendViaMailto() {
+            const to = document.getElementById('previewTo').innerText;
+            const subject = encodeURIComponent(document.getElementById('previewSubject').innerText);
+            const body = encodeURIComponent(document.getElementById('previewBody').innerText);
+
+            window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+        }
+
+        function triggerEmailDigest(type) {
+            openEmailConfigModal();
+            previewEmail(type);
+            showToast('Email Digest berhasil di-generate!');
+        }
+
+        function checkAutoEmailAlerts() {
+            // Simulator banner calculation
+            const overdueCount = tasks.filter(t => getTaskStatus(t).code === 'OVERDUE').length;
+            if (overdueCount > 0) {
+                console.log(`[Auto-Reminder System] Found ${overdueCount} overdue tasks requiring daily email reminders.`);
+            }
+        }
+
+        // Data Backup & Export/Import
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `RawatRumah_Backup_${formatDateToYYYYMMDD(new Date())}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Data pemeliharaan berhasil diekspor.');
+        }
+
+        function importData(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        tasks = imported;
+                        saveTasksToStorage();
+                        renderCategoriesFilter();
+                        renderTasks();
+                        showToast('Data berhasil diimpor!');
+                    } else {
+                        showToast('Format JSON tidak valid!', 'error');
+                    }
+                } catch(err) {
+                    showToast('Gagal membaca file JSON.', 'error');
+                }
+            };
+            if (event.target.files[0]) {
+                fileReader.readAsText(event.target.files[0]);
+            }
+        }
+
+        // Utilities
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const message = document.getElementById('toastMessage');
+            const icon = document.getElementById('toastIcon');
+
+            message.innerText = msg;
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-xmark text-red-400 text-lg';
+            } else if (type === 'info') {
+                icon.className = 'fa-solid fa-circle-info text-sky-400 text-lg';
+            } else {
+                icon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
