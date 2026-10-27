@@ -25,6 +25,7 @@ const SEND_HOUR = 8;           // jam kirim (zona waktu skrip; Apps Script mengi
 const WEEKLY_DAY = 1;          // 0=Minggu, 1=Senin, ... 6=Sabtu
 const UPCOMING_DAYS = 7;       // jendela "akan jatuh tempo"
 const OVERDUE_MAX_DAYS = 3;    // lama pengingat harian untuk tugas terlampaui
+const APP_URL = 'https://andrekhrisna.github.io/RawatRumah/'; // tujuan tombol di email
 // ============================================================================
 
 const CHUNK_SIZE = 8000; // batas 1 Script Property = 9 KB
@@ -189,8 +190,13 @@ function composeEmail_(digest, now, force) {
     text += note + '\n\n';
     html += '<p style="color:#64748b;font-size:12px">' + esc_(note) + '</p>';
   }
-  text += 'Klik "Selesai" di aplikasi RawatRumah setelah dikerjakan agar pengingat berhenti.';
-  html += '<p style="color:#64748b;font-size:12px;margin-top:16px">Klik <b>Selesai</b> di aplikasi RawatRumah setelah dikerjakan agar pengingat berhenti.</p></div>';
+  text += 'Buka aplikasi dan klik "Selesai" setelah dikerjakan agar pengingat berhenti:\n' + APP_URL;
+  html += '<table role="presentation" cellspacing="0" cellpadding="0" style="margin:20px 0 8px"><tr>' +
+    '<td style="background:#0284c7;border-radius:8px">' +
+    '<a href="' + esc_(APP_URL) + '" target="_blank" style="display:inline-block;padding:12px 24px;' +
+    'font-family:Arial,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none">' +
+    'Buka RawatRumah &amp; klik Selesai</a></td></tr></table>' +
+    '<p style="color:#64748b;font-size:12px;margin:0">Klik <b>Selesai</b> pada tugas yang sudah dikerjakan agar pengingat berhenti.</p></div>';
   return { subject: subject, text: text, html: html };
 }
 
