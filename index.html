@@ -73,12 +73,12 @@
                 </div>
                 <div>
                     <h3 class="font-bold text-sm sm:text-base">Ada Tugas Terlampaui yang Membutuhkan Perhatian!</h3>
-                    <p class="text-xs sm:text-sm opacity-90" id="emailBannerText">Tugas terlampaui dikirim via pengingat harian sampai Anda mengklik selesai.</p>
+                    <p class="text-xs sm:text-sm opacity-90" id="emailBannerText">Tugas terlampaui diingatkan lewat email harian (maks. 3 hari) sampai Anda mengklik selesai.</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 self-end md:self-auto">
                 <button onclick="triggerEmailDigest('daily')" class="px-3 py-1.5 bg-white text-red-600 font-semibold rounded-lg text-xs hover:bg-slate-100 transition shadow">
-                    <i class="fa-solid fa-paper-plane mr-1"></i> Kirim Digest Harian Now
+                    <i class="fa-solid fa-envelope-open-text mr-1"></i> Lihat Pratinjau Email
                 </button>
             </div>
         </div>
@@ -363,18 +363,36 @@
                         <i class="fa-solid fa-sliders text-sky-600"></i> Konfigurasi Email Penerima
                     </h4>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Email Anda (Penerima Remind):</label>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Email Anda (untuk sapaan pratinjau):</label>
                         <input type="email" id="userEmailInput" placeholder="pemilik.rumah@email.com" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <p class="text-[11px] text-slate-400 mt-1">Penerima email otomatis ditentukan di skrip Google (akun yang memasangnya).</p>
                     </div>
-                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">URL Web App Google Apps Script:</label>
+                        <input type="url" id="syncUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kata Sandi (SECRET) skrip:</label>
+                        <input type="password" id="syncTokenInput" autocomplete="off" placeholder="sama persis dengan SECRET di skrip" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="manualSync()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-rotate"></i> Sinkronkan Sekarang
+                        </button>
+                        <button onclick="sendTestEmail()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim Email Uji (Nyata)
+                        </button>
+                    </div>
+                    <p id="syncStatus" class="text-[11px] font-semibold text-slate-500">Belum tersambung.</p>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                         <div class="bg-white p-3 rounded-lg border border-slate-200 text-xs">
-                            <span class="font-bold text-red-600 block mb-0.5"><i class="fa-solid fa-calendar-day mr-1"></i> Mode Harian (Daily)</span>
-                            Mengecek dan mengirim daftar tugas <span class="font-semibold text-red-600">TERLAMPAUI</span> setiap hari jam 08:00 sampai Anda klik Selesai.
+                            <span class="font-bold text-red-600 block mb-0.5"><i class="fa-solid fa-calendar-day mr-1"></i> Pengingat Harian (Terlampaui)</span>
+                            Tugas <span class="font-semibold text-red-600">TERLAMPAUI</span> diingatkan setiap hari sekitar jam 08:00, <b>maksimal 3 hari</b> atau sampai Anda klik Selesai.
                         </div>
                         <div class="bg-white p-3 rounded-lg border border-slate-200 text-xs">
-                            <span class="font-bold text-amber-600 block mb-0.5"><i class="fa-solid fa-calendar-week mr-1"></i> Mode Mingguan (Weekly)</span>
-                            Mengecek ringkasan tugas <span class="font-semibold text-amber-600">MENDATANG (≤7 Hari)</span> setiap Senin pagi.
+                            <span class="font-bold text-amber-600 block mb-0.5"><i class="fa-solid fa-calendar-week mr-1"></i> Pengingat Mingguan</span>
+                            Setiap Senin: tugas yang jatuh tempo <span class="font-semibold text-amber-600">dalam 7 hari ke depan</span>. Digabung dalam satu email dengan pengingat harian.
                         </div>
                     </div>
                 </div>
@@ -414,7 +432,7 @@
             </div>
 
             <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
-                <span class="text-[11px] text-slate-400">Pengingat siap di-copy atau dikirimkan</span>
+                <span class="text-[11px] text-slate-400">Pratinjau di bawah hanya simulasi; email asli dikirim oleh skrip Google</span>
                 <button onclick="saveEmailConfig()" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-xs shadow transition">
                     Simpan Pengaturan
                 </button>
@@ -532,6 +550,9 @@
         let tasks = [];
         let config = {
             userEmail: 'pemilik.rumah@gmail.com',
+            syncUrl: '',
+            syncToken: '',
+            lastSyncAt: null,
             lastDailyDigest: null,
             lastWeeklyDigest: null
         };
@@ -562,6 +583,7 @@
 
         function saveTasksToStorage() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+            scheduleSync();
         }
 
         function loadConfig() {
@@ -570,13 +592,117 @@
                 try { config = { ...config, ...JSON.parse(storedConfig) }; } catch (e) {}
             }
             document.getElementById('userEmailInput').value = config.userEmail || '';
+            document.getElementById('syncUrlInput').value = config.syncUrl || '';
+            document.getElementById('syncTokenInput').value = config.syncToken || '';
+            refreshSyncStatus();
+        }
+
+        function readEmailInputs() {
+            config.userEmail = document.getElementById('userEmailInput').value || 'user@example.com';
+            config.syncUrl = document.getElementById('syncUrlInput').value.trim();
+            config.syncToken = document.getElementById('syncTokenInput').value;
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
         }
 
         function saveEmailConfig() {
-            config.userEmail = document.getElementById('userEmailInput').value || 'user@example.com';
-            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            readEmailInputs();
             closeEmailConfigModal();
             showToast('Pengaturan email berhasil disimpan!');
+            if (isSyncConfigured()) syncToServer();
+            renderTasks();
+        }
+
+        // ==================== SINKRONISASI KE GOOGLE APPS SCRIPT ====================
+        // Server (skrip Google) tidak bisa membaca localStorage browser, jadi daftar tugas
+        // dikirim ke sana setiap ada perubahan. Email terjadwal dikirim oleh skrip itu.
+        let syncTimer = null;
+
+        function isSyncConfigured() {
+            return /^https:\/\/script\.google\.com\//.test(config.syncUrl || '') && !!config.syncToken;
+        }
+
+        function setSyncStatus(text, kind) {
+            const el = document.getElementById('syncStatus');
+            el.innerText = text;
+            el.className = 'text-[11px] font-semibold ' +
+                (kind === 'ok' ? 'text-emerald-600' : kind === 'error' ? 'text-red-600' : 'text-slate-500');
+        }
+
+        function refreshSyncStatus() {
+            if (!isSyncConfigured()) {
+                setSyncStatus('Belum tersambung. Isi URL dan kata sandi dari skrip Google (lihat apps-script/README.md).', 'idle');
+            } else if (config.lastSyncAt) {
+                setSyncStatus('Tersinkron terakhir: ' + new Date(config.lastSyncAt).toLocaleString('id-ID'), 'ok');
+            } else {
+                setSyncStatus('Terisi, belum pernah sinkron. Klik "Sinkronkan Sekarang".', 'idle');
+            }
+        }
+
+        async function callBackend(action, extra) {
+            // text/plain agar tidak memicu preflight CORS (Apps Script tidak menangani OPTIONS)
+            const res = await fetch(config.syncUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ token: config.syncToken, action, ...extra })
+            });
+            return res.json();
+        }
+
+        function tasksForSync() {
+            return tasks.map(t => ({
+                id: t.id, name: t.name, category: t.category, freqValue: t.freqValue,
+                freqUnit: t.freqUnit, lastDoneDate: t.lastDoneDate, notes: t.notes || ''
+            }));
+        }
+
+        function scheduleSync() {
+            if (!isSyncConfigured()) return;
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => syncToServer(), 1000);
+        }
+
+        async function syncToServer(showResult) {
+            if (!isSyncConfigured()) return false;
+            setSyncStatus('Menyinkronkan...', 'idle');
+            try {
+                const r = await callBackend('sync', { tasks: tasksForSync() });
+                if (!r.ok) throw new Error(r.error || 'Ditolak server');
+                config.lastSyncAt = r.savedAt || new Date().toISOString();
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+                refreshSyncStatus();
+                if (showResult) showToast(`${r.count} tugas tersinkron ke skrip email.`);
+                return true;
+            } catch (err) {
+                setSyncStatus('Gagal sinkron: ' + err.message + ' (data tetap aman di browser ini)', 'error');
+                if (showResult) showToast('Gagal sinkron: ' + err.message, 'error');
+                return false;
+            }
+        }
+
+        async function manualSync() {
+            readEmailInputs();
+            if (!isSyncConfigured()) {
+                showToast('Isi URL Web App (https://script.google.com/...) dan kata sandi dulu.', 'error');
+                return;
+            }
+            await syncToServer(true);
+            renderTasks();
+        }
+
+        async function sendTestEmail() {
+            readEmailInputs();
+            if (!isSyncConfigured()) {
+                showToast('Isi URL Web App dan kata sandi dulu.', 'error');
+                return;
+            }
+            if (!(await syncToServer(false))) return;
+            try {
+                const r = await callBackend('test', {});
+                if (!r.ok) throw new Error(r.error || 'Ditolak server');
+                showToast(`Email uji terkirim ke ${r.to} (${r.overdue} terlampaui, ${r.upcoming} mendatang).`);
+            } catch (err) {
+                showToast('Gagal kirim email uji: ' + err.message, 'error');
+            }
         }
 
         function getSampleTasks() {
@@ -853,7 +979,9 @@
             if (overdue > 0) {
                 alertBanner.classList.remove('hidden');
                 badge.classList.remove('hidden');
-                document.getElementById('emailBannerText').innerText = `Ada ${overdue} tugas terlampaui. Pengingat harian aktif dikirim ke ${config.userEmail || 'email Anda'}!`;
+                document.getElementById('emailBannerText').innerText = isSyncConfigured()
+                    ? `Ada ${overdue} tugas terlampaui. Pengingat email harian berjalan (maks. 3 hari) sampai Anda klik Selesai.`
+                    : `Ada ${overdue} tugas terlampaui. Email otomatis BELUM aktif: sambungkan skrip Google lewat tombol email di atas.`;
             } else {
                 alertBanner.classList.add('hidden');
                 badge.classList.add('hidden');
